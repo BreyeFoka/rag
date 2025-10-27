@@ -1,0 +1,70 @@
+# Core dependencies
+langchain-community==0.3.31
+langchain-text-splitters==0.3.11
+langchain-core==0.3.49
+# chromadb==0.4.24
+# sentence-transformers==2.7.0
+# # faiss-cpu==1.7.4
+# ollama==0.2.1
+
+# # Database
+# # sqlite3
+# sqlalchemy==2.0.30
+
+# # Text processing
+# pypdf2==3.0.1
+# python-docx==1.1.0
+# beautifulsoup4==4.12.3
+# tiktoken==0.7.0
+
+# # Web framework
+# flask==3.0.3
+# flask-cors==4.0.1
+
+# # Utilities
+# # numpy==1.24.3
+# # pandas==2.0.3
+# python-dotenv==1.0.1
+# requests==2.31.0
+# tqdm==4.66.4
+
+# # Evaluation and metrics
+# # rouge-score==0.1.2
+# evaluate==0.4.2
+
+
+
+# --- Core dependencies ---
+langchain-community==0.3.31
+langchain-text-splitters==0.3.11
+langchain-core==0.3.49
+chromadb==0.4.24
+sentence-transformers==2.7.0
+ollama==0.2.1
+
+# --- Database ---
+sqlalchemy==2.0.30
+
+# --- Text processing ---
+pypdf2==3.0.1
+python-docx==1.1.0
+beautifulsoup4==4.12.3
+tiktoken==0.7.0
+
+# --- Web framework ---
+flask==3.0.3
+flask-cors==4.0.1
+
+# --- Utilities ---
+numpy>=1.26.4
+pandas>=2.2.2
+python-dotenv==1.0.1
+requests==2.31.0
+tqdm==4.66.4
+
+# --- Evaluation and metrics ---
+evaluate==0.4.2
+rouge-score==0.1.2
+
+# --- Optional Vector DB (comment out if fails) ---
+# faiss-cpu==1.8.0.post1

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid RAG System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .query-section {
+            margin-bottom: 30px;
+        }
+
+        .query-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .query-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .query-input:focus {
+            border-color: #667eea;
+        }
+
+        .method-select {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 16px;
+            min-width: 120px;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result-answer {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .result-sources {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .source-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .source-score {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .source-content {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .metadata {
+            background: #e6fffa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .metadata-item {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 5px 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .upload-section {
+            border-top: 2px solid #eee;
+            padding-top: 30px;
+            margin-top: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e6f3ff;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .query-form {
+                flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Hybrid RAG System</h1>
+            <p>AI-Powered Document Retrieval & Question Answering</p>
+        </div>
+
+        <div class="main-card">
+            <div class="query-section">
+                <h3>🔍 Ask a Question</h3>
+                <div class="query-form">
+                    <input 
+                        type="text" 
+                        id="queryInput" 
+                        class="query-input" 
+                        placeholder="Ask anything about your documents..."
+                        value="What is artificial intelligence?"
+                    >
+                    <select id="methodSelect" class="method-select">
+                        <option value="hybrid">Hybrid</option>
+                        <option value="dense">Dense</option>
+                        <option value="sparse">Sparse</option>
+                    </select>
+                    <button id="queryBtn" class="btn btn-primary">Search</button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Searching your documents...</p>
+                </div>
+
+                <div class="error" id="error"></div>
+
+                <div class="result" id="result">
+                    <div class="result-answer" id="resultAnswer">
+                        <h4> Answer</h4>
+                        <div id="answerText"></div>
+                    </div>
+
+                    <div class="result-sources" id="resultSources">
+                        <h4>Sources</h4>
+                        <div id="sourcesContainer"></div>
+                    </div>
+
+                    <div class="metadata" id="metadata">
+                        <span class="metadata-item">
+                            ⏱️ Total: <span id="totalTime">0</span>s
+                        </span>
+                        <span class="metadata-item">
+                            🔍 Retrieval: <span id="retrievalTime">0</span>s
+                        </span>
+                        <span class="metadata-item">
+                            🤖 Generation: <span id="generationTime">0</span>s
+                        </span>
+                        <span class="metadata-item">
+                            📄 Sources: <span id="numSources">0</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <h3>📄 Upload Documents</h3>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.txt,.docx,.md,.html">
+                    <p>📁 Click here or drag files to upload</p>
+                    <p style="color: #666; font-size: 14px;">Supported: PDF, TXT, DOCX, MD, HTML</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-card">
+            <h3>📊 System Statistics</h3>
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = '/api';
+
+        // DOM Elements
+        const queryInput = document.getElementById('queryInput');
+        const methodSelect = document.getElementById('methodSelect');
+        const queryBtn = document.getElementById('queryBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+        const answerText = document.getElementById('answerText');
+        const sourcesContainer = document.getElementById('sourcesContainer');
+        const totalTime = document.getElementById('totalTime');
+        const retrievalTime = document.getElementById('retrievalTime');
+        const generationTime = document.getElementById('generationTime');
+        const numSources = document.getElementById('numSources');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const statsGrid = document.getElementById('statsGrid');
+
+        // Event Listeners
+        queryBtn.addEventListener('click', performQuery);
+        queryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performQuery();
+        });
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('drop', handleFileDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Load stats on page load
+        loadStats();
+
+        // Functions
+        async function performQuery() {
+            const question = queryInput.value.trim();
+            if (!question) return;
+
+            showLoading();
+            hideError();
+            hideResult();
+
+            try {
+                const response = await fetch(`${API_BASE}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        retrieval_method: methodSelect.value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult(data);
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+            } catch (err) {
+                showError('Failed to connect to the server. Make sure the API is running.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResult(data) {
+            answerText.innerHTML = `<p>${data.answer}</p>`;
+
+            sourcesContainer.innerHTML = '';
+            data.sources.slice(0, 3).forEach((source, index) => {
+                const sourceDiv = document.createElement('div');
+                sourceDiv.className = 'source-item';
+                
+                const score = source.combined_score || source.similarity_score || source.bm25_score || 0;
+                const preview = source.content.length > 200 ? 
+                    source.content.substring(0, 200) + '...' : source.content;
+
+                sourceDiv.innerHTML = `
+                    <div class="source-score">Source ${index + 1} - Score: ${score.toFixed(3)}</div>
+                    <div class="source-content">${preview}</div>
+                `;
+                sourcesContainer.appendChild(sourceDiv);
+            });
+
+            const metadata = data.metadata;
+            totalTime.textContent = metadata.total_time.toFixed(2);
+            retrievalTime.textContent = metadata.retrieval_time.toFixed(2);
+            generationTime.textContent = metadata.generation_time.toFixed(2);
+            numSources.textContent = metadata.num_sources;
+
+            showResult();
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/system/stats`);
+                const stats = await response.json();
+
+                if (response.ok) {
+                    displayStats(stats);
+                }
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        function displayStats(stats) {
+            const statsData = [
+                { label: 'Total Documents', value: stats.total_documents },
+                { label: 'Total Vectors', value: stats.vector_database.total_vectors },
+                { label: 'Vector DB', value: stats.vector_database.db_type },
+                { label: 'Model', value: stats.model_name },
+                { label: 'Sparse Terms', value: stats.sparse_index.total_terms },
+                { label: 'Avg Doc Length', value: Math.round(stats.sparse_index.average_document_length) }
+            ];
+
+            statsGrid.innerHTML = '';
+            statsData.forEach(stat => {
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                statCard.innerHTML = `
+                    <div class="stat-value">${stat.value}</div>
+                    <div class="stat-label">${stat.label}</div>
+                `;
+                statsGrid.appendChild(statCard);
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            uploadFiles(files);
+        }
+
+        function handleFileSelect() {
+            const files = fileInput.files;
+            uploadFiles(files);
+        }
+
+        async function uploadFiles(files) {
+            for (let file of files) {
+                await uploadSingleFile(file);
+            }
+            loadStats(); // Refresh stats after upload
+        }
+
+        async function uploadSingleFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE}/documents`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showError(`✓ ${file.name} uploaded successfully`, false);
+                } else {
+                    showError(`✗ Failed to upload ${file.name}: ${result.error}`);
+                }
+            } catch (err) {
+                showError(`✗ Failed to upload ${file.name}: ${err.message}`);
+            }
+        }
+
+        function showLoading() {
+            loading.classList.add('show');
+        }
+
+        function hideLoading() {
+            loading.classList.remove('show');
+        }
+
+        function showResult() {
+            result.classList.add('show');
+        }
+
+        function hideResult() {
+            result.classList.remove('show');
+        }
+
+        function showError(message, isError = true) {
+            error.textContent = message;
+            error.style.background = isError ? '#fed7d7' : '#c6f6d5';
+            error.style.color = isError ? '#c53030' : '#2f855a';
+            error.classList.add('show');
+            
+            setTimeout(() => {
+                hideError();
+            }, 5000);
+        }
+
+        function hideError() {
+            error.classList.remove('show');
+        }
+    </script>
+</body>
+</html>
