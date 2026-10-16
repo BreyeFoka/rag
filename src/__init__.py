@@ -26,20 +26,23 @@ Usage:
 """
 
 __version__ = "1.0.0"
-__author__ = "Hybrid RAG System"
-__email__ = "contact@hybridrag.com"
+__author__ = "Breye Foka"
 
-# Import main classes for easy access
-from .hybrid_rag import HybridRAGSystem
-from .database import DatabaseManager
-from .vector_db import VectorDBManager
-from .sparse_retrieval import BM25Retriever
-from .document_processor import DocumentProcessor
+# Exports load on first use, so importing a light module such as src.fusion
+# doesn't pull in Ollama, ChromaDB or the embedding model.
+_EXPORTS = {
+    'HybridRAGSystem': '.hybrid_rag',
+    'DatabaseManager': '.database',
+    'VectorDBManager': '.vector_db',
+    'BM25Retriever': '.sparse_retrieval',
+    'DocumentProcessor': '.document_processor',
+}
 
-__all__ = [
-    'HybridRAGSystem',
-    'DatabaseManager', 
-    'VectorDBManager',
-    'BM25Retriever',
-    'DocumentProcessor'
-]
+__all__ = list(_EXPORTS)
+
+
+def __getattr__(name):
+    if name in _EXPORTS:
+        from importlib import import_module
+        return getattr(import_module(_EXPORTS[name], __name__), name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -126,7 +126,9 @@ class BM25Retriever:
         
         for term in self.doc_freqs:
             df = self.doc_freqs[term]
-            idf = math.log((N - df + 0.5) / (df + 0.5))
+            # The +1 keeps IDF positive for terms in more than half the chunks;
+            # the classic form goes negative there, so matching a common word lowered a score.
+            idf = math.log(1 + (N - df + 0.5) / (df + 0.5))
             self.idf_cache[term] = idf
     
     def get_idf(self, term: str) -> float:

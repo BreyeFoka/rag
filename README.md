@@ -232,8 +232,9 @@ response = rag.query("What is AI?", retrieval_method="hybrid")
 
 3. **Hybrid Retrieval** (Combined)
    - Best for: Most queries, balanced relevance
-   - Uses: Weighted combination of dense + sparse
+   - Uses: Weighted combination of dense + sparse, after scaling each list's scores to 0–1
    - Example: Combines semantic understanding with keyword precision
+   - Why the scaling matters: BM25 scores are unbounded (often 5–15) while vector similarity is 0–1, so adding them raw lets keyword matches outrank everything regardless of the weights. See `src/fusion.py`.
 
 ### Database Schema
 
@@ -352,7 +353,7 @@ hybrid-rag-system/
 # Install development dependencies
 pip install -r requirements.txt
 
-# Run tests
+# Run tests (no Ollama or embedding model needed)
 python -m pytest tests/
 
 # Format code

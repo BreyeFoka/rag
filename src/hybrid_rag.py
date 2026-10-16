@@ -12,6 +12,7 @@ from datetime import datetime
 from .database import DatabaseManager
 from .vector_db import VectorDBManager
 from .sparse_retrieval import BM25Retriever
+from .fusion import combine_results
 from .document_processor import DocumentProcessor
 try:
     from .. import config
@@ -223,77 +224,17 @@ class HybridRAGSystem:
         
         return combined_results
     
-    def _combine_and_rerank(self, dense_results: List[Dict], sparse_results: List[Dict], 
+    def _combine_and_rerank(self, dense_results: List[Dict], sparse_results: List[Dict],
                            query: str, top_k: int) -> List[Dict[str, Any]]:
         """
-        Combine dense and sparse results with weighted scoring
-        
-        Args:
-            dense_results: Results from dense retrieval
-            sparse_results: Results from sparse retrieval
-            query: Original query
-            top_k: Number of results to return
-            
-        Returns:
-            Combined and reranked results
+        Combine dense and sparse results with weighted scoring of normalised scores.
+        See src/fusion.py for why each list is normalised before weighting.
         """
-        # Create a dictionary to store combined scores
-        result_scores = {}
-        
-        # Process dense results
-        for result in dense_results:
-            chunk_id = result['id']
-            dense_score = result.get('similarity_score', 0.0)
-            
-            result_scores[chunk_id] = {
-                'content': result['content'],
-                'metadata': result.get('metadata', {}),
-                'dense_score': dense_score,
-                'sparse_score': 0.0,
-                'combined_score': 0.0,
-                'chunk_id': chunk_id
-            }
-        
-        # Process sparse results
-        for result in sparse_results:
-            chunk_id = result['id']
-            sparse_score = result.get('bm25_score', 0.0)
-            
-            if chunk_id in result_scores:
-                result_scores[chunk_id]['sparse_score'] = sparse_score
-            else:
-                result_scores[chunk_id] = {
-                    'content': result['content'],
-                    'metadata': result.get('metadata', {}),
-                    'dense_score': 0.0,
-                    'sparse_score': sparse_score,
-                    'combined_score': 0.0,
-                    'chunk_id': chunk_id
-                }
-        
-        # Calculate combined scores using weighted combination
-        for chunk_id, scores in result_scores.items():
-            # Normalize scores (simple min-max normalization)
-            dense_norm = scores['dense_score']
-            sparse_norm = scores['sparse_score']
-            
-            # Weighted combination
-            combined_score = (
-                config.DENSE_WEIGHT * dense_norm + 
-                config.SPARSE_WEIGHT * sparse_norm
-            )
-            scores['combined_score'] = combined_score
-        
-        # Sort by combined score
-        sorted_results = sorted(
-            result_scores.values(), 
-            key=lambda x: x['combined_score'], 
-            reverse=True
+        return combine_results(
+            dense_results, sparse_results,
+            config.DENSE_WEIGHT, config.SPARSE_WEIGHT, top_k,
         )
-        
-        # Return top-k results
-        return sorted_results[:top_k]
-    
+
     def generate_response(self, query: str, context_chunks: List[Dict[str, Any]]) -> str:
         """
         Generate response using Ollama LLM with retrieved context
